@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Absensi Pegawai</title>
+  <title>Absensi Pegawai (Debug)</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
     label, select, input { display: block; width: 100%; margin-bottom: 15px; }
@@ -17,7 +17,7 @@
   </style>
 </head>
 <body>
-  <h2>Form Absensi Pegawai</h2>
+  <h2>Form Absensi Pegawai (Versi Debug)</h2>
   <form action="https://docs.google.com/forms/d/e/1FAIpQLSeTCCniucW246mMo646BYXNgOGwRu0fKV5HP0OFL3zOUet8hQ/formResponse"
         method="POST" target="hidden_iframe" onsubmit="return checkLocation();">
     <label>Nama Pegawai:</label>
@@ -31,6 +31,7 @@
       <option value="Endang Riswati">Endang Riswati</option>
       <option value="Nia Wulandari">Nia Wulandari</option>
       <option value="Wahyu Purwanto">Wahyu Purwanto</option>
+      <option value="Ulfiya Na'imi">Ulfiya Na'imi</option>
     </select>
 
     <label>Status Kehadiran:</label>
@@ -43,7 +44,7 @@
 
     <div id="buktiDiv">
       <label>Unggah Bukti Izin/Sakit:</label>
-      <input type="file" name="entry.567890" accept="image/*,application/pdf">
+      <input type="file" name="entry.567890" accept="image/*,application/pdf" id="bukti">
     </div>
 
     <label>Lokasi GPS (otomatis):</label>
@@ -126,7 +127,8 @@
           document.getElementById("lokasi").value = userLat.toFixed(5) + ", " + userLng.toFixed(5);
         },
         err => {
-          document.getElementById("warning").innerText = "❌ Gagal mendapatkan lokasi: " + err.message;
+          const debugInfo = `Kode error: ${err.code}\nPesan: ${err.message}\nApakah perangkat memberi izin lokasi?`;
+          document.getElementById("warning").innerText = "❌ Gagal mendapatkan lokasi!\n" + debugInfo;
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
