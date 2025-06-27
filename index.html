@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Absensi Pegawai (Debug)</title>
+  <title>Absensi Pegawai</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
     label, select, input { display: block; width: 100%; margin-bottom: 15px; }
@@ -15,16 +14,107 @@
     #warning { color: red; font-weight: bold; white-space: pre-line; }
     #buktiDiv { display: none; }
   </style>
+  <script>
+    const sekolahLat = -7.71917;
+    const sekolahLng = 113.00861;
+    const radiusMaks = 200;
+    let userLat = null, userLng = null;
+
+    function isMobile() {
+      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+    window.onload = function () {
+      if (!isMobile()) {
+        document.body.innerHTML = "<h2 style='color:red;text-align:center;padding:20px;'>❌ Akses hanya diperbolehkan dari perangkat HP.<br>Silakan gunakan HP Android atau iPhone untuk mengisi absensi.</h2>";
+      } else {
+        updateLokasi();
+      }
+    };
+
+    function toggleBukti() {
+      const status = document.getElementById("status").value;
+      document.getElementById("buktiDiv").style.display = (status === "Izin" || status === "Sakit") ? "block" : "none";
+    }
+
+    function getDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
+      const Δφ = (lat2 - lat1) * Math.PI / 180, Δλ = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function checkLocation() {
+      const status = document.getElementById("status").value;
+      const bukti = document.getElementById("bukti");
+
+      if ((status === "Izin" || status === "Sakit")) {
+        if (!bukti || !bukti.value) {
+          document.getElementById("warning").innerText = "❌ Unggah bukti pendukung untuk status Izin/Sakit.";
+          return false;
+        }
+        return true;
+      }
+
+      if (!userLat || !userLng) {
+        document.getElementById("warning").innerText = "❌ Lokasi belum tersedia. Pastikan GPS aktif.";
+        return false;
+      }
+
+      const jarak = getDistance(userLat, userLng, sekolahLat, sekolahLng);
+      if (jarak > radiusMaks) {
+        document.getElementById("warning").innerText = "❌ Anda berada di luar radius 200 meter dari sekolah!";
+        return false;
+      }
+
+      const now = new Date();
+      const hari = now.getDay();
+      const jam = now.getHours(), menit = now.getMinutes(), waktu = jam + menit / 60;
+      let masukStart = 6.5, masukEnd = 7.0, pulangStart = null, pulangEnd = null;
+
+      if (hari >= 1 && hari <= 4) { pulangStart = 14.0; pulangEnd = 14.5; }
+      else if (hari === 5) { pulangStart = 11.0; pulangEnd = 11.5; }
+      else if (hari === 6) { pulangStart = 12.5; pulangEnd = 13.0; }
+      else { document.getElementById("warning").innerText = "❌ Absensi tidak tersedia hari Minggu!"; return false; }
+
+      if ((waktu >= masukStart && waktu <= masukEnd) || (waktu >= pulangStart && waktu <= pulangEnd)) {
+        return true;
+      } else {
+        const pesan = {
+          1: "Masuk: 06.30–07.00 | Pulang: 14.00–14.30 (Senin–Kamis)",
+          5: "Masuk: 06.30–07.00 | Pulang: 11.00–11.30 (Jumat)",
+          6: "Masuk: 06.30–07.00 | Pulang: 12.30–13.00 (Sabtu)"
+        };
+        document.getElementById("warning").innerText = "❌ Sekarang di luar waktu absen:\\n" + (pesan[hari] || "");
+        return false;
+      }
+    }
+
+    function updateLokasi() {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          userLat = pos.coords.latitude;
+          userLng = pos.coords.longitude;
+          document.getElementById("lokasi").value = userLat.toFixed(5) + ", " + userLng.toFixed(5);
+        },
+        err => {
+          const debugInfo = `Kode error: ${err.code}\\nPesan: ${err.message}\\nApakah perangkat memberi izin lokasi?`;
+          document.getElementById("warning").innerText = "❌ Gagal mendapatkan lokasi!\\n" + debugInfo;
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+  </script>
 </head>
 <body>
-  <h2>Form Absensi Pegawai (Versi Debug)</h2>
+  <h2>Form Absensi Pegawai</h2>
   <form action="https://docs.google.com/forms/d/e/1FAIpQLSeTCCniucW246mMo646BYXNgOGwRu0fKV5HP0OFL3zOUet8hQ/formResponse"
         method="POST" target="hidden_iframe" onsubmit="return checkLocation();">
     <label>Nama Pegawai:</label>
     <select name="entry.123456" required>
       <option value="">-- Pilih Nama --</option>
-      <option value="Sugeng Hidayat">Sugeng Hidayat</option>
       <option value="Sutriono">Sutriono</option>
+      <option value="Sugeng Hidayat">Sugeng Hidayat</option>
       <option value="Rety Fauziah">Rety Fauziah</option>
       <option value="Komariah">Komariah</option>
       <option value="Ummu Sholikhah">Ummu Sholikhah</option>
@@ -58,83 +148,5 @@
   </form>
 
   <iframe name="hidden_iframe" style="display:none;"></iframe>
-
-  <script>
-    const sekolahLat = -7.71917;
-    const sekolahLng = 113.00861;
-    const radiusMaks = 200;
-    let userLat = null, userLng = null;
-
-    function toggleBukti() {
-      const status = document.getElementById("status").value;
-      document.getElementById("buktiDiv").style.display = (status === "Izin" || status === "Sakit") ? "block" : "none";
-    }
-
-    function getDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371e3;
-      const φ1 = lat1 * Math.PI / 180, φ2 = lat2 * Math.PI / 180;
-      const Δφ = (lat2 - lat1) * Math.PI / 180, Δλ = (lon2 - lon1) * Math.PI / 180;
-      const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
-
-    function checkLocation() {
-      if (!userLat || !userLng) {
-        document.getElementById("warning").innerText = "❌ Lokasi belum tersedia. Pastikan GPS aktif.";
-        return false;
-      }
-
-      const jarak = getDistance(userLat, userLng, sekolahLat, sekolahLng);
-      if (jarak > radiusMaks) {
-        document.getElementById("warning").innerText = "❌ Anda berada di luar radius 200 meter dari sekolah!";
-        return false;
-      }
-
-      const now = new Date();
-      const hari = now.getDay();
-      const jam = now.getHours(), menit = now.getMinutes(), waktu = jam + menit / 60;
-      let masukStart = 6.5, masukEnd = 7.0, pulangStart = null, pulangEnd = null;
-
-      if (hari >= 1 && hari <= 4) { pulangStart = 14.0; pulangEnd = 14.5; }
-      else if (hari === 5) { pulangStart = 11.0; pulangEnd = 11.5; }
-      else if (hari === 6) { pulangStart = 12.5; pulangEnd = 13.0; }
-      else { document.getElementById("warning").innerText = "❌ Absensi tidak tersedia hari Minggu!"; return false; }
-
-      if ((waktu >= masukStart && waktu <= masukEnd) || (waktu >= pulangStart && waktu <= pulangEnd)) {
-        const status = document.getElementById("status").value;
-        const bukti = document.getElementById("bukti");
-        if ((status === "Izin" || status === "Sakit") && (!bukti || !bukti.value)) {
-          document.getElementById("warning").innerText = "❌ Unggah bukti pendukung untuk status Izin/Sakit.";
-          return false;
-        }
-        return true;
-      } else {
-        const pesan = {
-          1: "Masuk: 06.30–07.00 | Pulang: 14.00–14.30 (Senin–Kamis)",
-          5: "Masuk: 06.30–07.00 | Pulang: 11.00–11.30 (Jumat)",
-          6: "Masuk: 06.30–07.00 | Pulang: 12.30–13.00 (Sabtu)"
-        };
-        document.getElementById("warning").innerText = "❌ Sekarang di luar waktu absen:\n" + (pesan[hari] || ""); 
-        return false;
-      }
-    }
-
-    function updateLokasi() {
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          userLat = pos.coords.latitude;
-          userLng = pos.coords.longitude;
-          document.getElementById("lokasi").value = userLat.toFixed(5) + ", " + userLng.toFixed(5);
-        },
-        err => {
-          const debugInfo = `Kode error: ${err.code}\nPesan: ${err.message}\nApakah perangkat memberi izin lokasi?`;
-          document.getElementById("warning").innerText = "❌ Gagal mendapatkan lokasi!\n" + debugInfo;
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-    }
-
-    window.onload = updateLokasi;
-  </script>
 </body>
 </html>
