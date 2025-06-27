@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -85,7 +86,7 @@
           5: "Masuk: 06.30–07.00 | Pulang: 11.00–11.30 (Jumat)",
           6: "Masuk: 06.30–07.00 | Pulang: 12.30–13.00 (Sabtu)"
         };
-        document.getElementById("warning").innerText = "❌ Sekarang di luar waktu absen:\\n" + (pesan[hari] || "");
+        document.getElementById("warning").innerText = "❌ Sekarang di luar waktu absen:\n" + (pesan[hari] || "");
         return false;
       }
     }
@@ -98,11 +99,24 @@
           document.getElementById("lokasi").value = userLat.toFixed(5) + ", " + userLng.toFixed(5);
         },
         err => {
-          const debugInfo = `Kode error: ${err.code}\\nPesan: ${err.message}\\nApakah perangkat memberi izin lokasi?`;
-          document.getElementById("warning").innerText = "❌ Gagal mendapatkan lokasi!\\n" + debugInfo;
+          const debugInfo = `Kode error: ${err.code}\nPesan: ${err.message}\nApakah perangkat memberi izin lokasi?`;
+          document.getElementById("warning").innerText = "❌ Gagal mendapatkan lokasi!\n" + debugInfo;
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
+    }
+
+    let firstLoad = true;
+    function submitBerhasil() {
+      if (firstLoad) {
+        firstLoad = false;
+      } else {
+        alert("✅ Anda berhasil mengirim data kehadiran!");
+        document.querySelector("form").reset();
+        document.getElementById("buktiDiv").style.display = "none";
+        document.getElementById("warning").innerText = "";
+        updateLokasi();
+      }
     }
   </script>
 </head>
@@ -113,8 +127,8 @@
     <label>Nama Pegawai:</label>
     <select name="entry.123456" required>
       <option value="">-- Pilih Nama --</option>
-      <option value="Sutriono">Sutriono</option>
       <option value="Sugeng Hidayat">Sugeng Hidayat</option>
+      <option value="Sutriono">Sutriono</option>
       <option value="Rety Fauziah">Rety Fauziah</option>
       <option value="Komariah">Komariah</option>
       <option value="Ummu Sholikhah">Ummu Sholikhah</option>
@@ -147,6 +161,6 @@
     <p id="warning"></p>
   </form>
 
-  <iframe name="hidden_iframe" style="display:none;"></iframe>
+  <iframe name="hidden_iframe" style="display:none;" onload="submitBerhasil();"></iframe>
 </body>
 </html>
