@@ -14,14 +14,8 @@
     #warning { color: red; font-weight: bold; white-space: pre-line; }
     #buktiDiv { display: none; }
     .download-link {
-      display: inline-block;
-      background-color: #007bff;
-      color: white;
-      padding: 10px;
-      border-radius: 5px;
-      text-decoration: none;
-      text-align: center;
-      margin-top: 20px;
+      display: inline-block; background-color: #007bff; color: white;
+      padding: 10px; border-radius: 5px; text-decoration: none; margin-top: 20px;
     }
   </style>
   <script>
@@ -30,12 +24,9 @@
     const radiusMaks = 200;
     let userLat = null, userLng = null;
 
-    function isMobile() {
-      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    }
     window.onload = function () {
-      if (!isMobile()) {
-        document.body.innerHTML = "<h2 style='color:red;text-align:center;padding:20px;'>❌ Akses hanya diperbolehkan dari perangkat HP.<br>Silakan gunakan HP Android atau iPhone untuk mengisi absensi.</h2>";
+      if (!/Android|iPhone/i.test(navigator.userAgent)) {
+        document.body.innerHTML = "<h2 style='color:red;text-align:center;padding:20px;'>❌ Akses hanya dari perangkat HP.</h2>";
       } else {
         updateLokasi();
       }
@@ -58,44 +49,34 @@
       const status = document.getElementById("status").value;
       const bukti = document.getElementById("bukti");
 
-      if ((status === "Izin" || status === "Sakit")) {
-        if (!bukti || !bukti.value) {
-          document.getElementById("warning").innerText = "❌ Unggah bukti pendukung untuk status Izin/Sakit.";
-          return false;
-        }
-        return true;
+      if ((status === "Izin" || status === "Sakit") && (!bukti || !bukti.value)) {
+        document.getElementById("warning").innerText = "❌ Upload bukti Izin/Sakit diperlukan.";
+        return false;
       }
 
       if (!userLat || !userLng) {
-        document.getElementById("warning").innerText = "❌ Lokasi belum tersedia. Pastikan GPS aktif.";
+        document.getElementById("warning").innerText = "❌ GPS belum aktif.";
         return false;
       }
 
       const jarak = getDistance(userLat, userLng, sekolahLat, sekolahLng);
       if (jarak > radiusMaks) {
-        document.getElementById("warning").innerText = "❌ Anda berada di luar radius 200 meter dari sekolah!";
+        document.getElementById("warning").innerText = "❌ Anda berada di luar radius 200 meter.";
         return false;
       }
 
       const now = new Date();
-      const hari = now.getDay();
-      const jam = now.getHours(), menit = now.getMinutes(), waktu = jam + menit / 60;
-      let masukStart = 6.5, masukEnd = 7.0, pulangStart = null, pulangEnd = null;
+      const day = now.getDay(), jam = now.getHours() + now.getMinutes() / 60;
+      let masukStart = 6.5, masukEnd = 7.0, pulangStart = 0, pulangEnd = 0;
+      if (day >= 1 && day <= 4) { pulangStart = 14.0; pulangEnd = 14.5; }
+      else if (day == 5) { pulangStart = 11.0; pulangEnd = 11.5; }
+      else if (day == 6) { pulangStart = 12.5; pulangEnd = 13.0; }
+      else { document.getElementById("warning").innerText = "❌ Absen tidak tersedia hari Minggu."; return false; }
 
-      if (hari >= 1 && hari <= 4) { pulangStart = 14.0; pulangEnd = 14.5; }
-      else if (hari === 5) { pulangStart = 11.0; pulangEnd = 11.5; }
-      else if (hari === 6) { pulangStart = 12.5; pulangEnd = 13.0; }
-      else { document.getElementById("warning").innerText = "❌ Absensi tidak tersedia hari Minggu!"; return false; }
-
-      if ((waktu >= masukStart && waktu <= masukEnd) || (waktu >= pulangStart && waktu <= pulangEnd)) {
+      if ((jam >= masukStart && jam <= masukEnd) || (jam >= pulangStart && jam <= pulangEnd)) {
         return true;
       } else {
-        const pesan = {
-          1: "Masuk: 06.30–07.00 | Pulang: 14.00–14.30 (Senin–Kamis)",
-          5: "Masuk: 06.30–07.00 | Pulang: 11.00–11.30 (Jumat)",
-          6: "Masuk: 06.30–07.00 | Pulang: 12.30–13.00 (Sabtu)"
-        };
-        document.getElementById("warning").innerText = "❌ Sekarang di luar waktu absen:\n" + (pesan[hari] || "");
+        document.getElementById("warning").innerText = "❌ Di luar waktu absensi!";
         return false;
       }
     }
@@ -108,8 +89,7 @@
           document.getElementById("lokasi").value = userLat.toFixed(5) + ", " + userLng.toFixed(5);
         },
         err => {
-          const debugInfo = `Kode error: ${err.code}\nPesan: ${err.message}\nApakah perangkat memberi izin lokasi?`;
-          document.getElementById("warning").innerText = "❌ Gagal mendapatkan lokasi!\n" + debugInfo;
+          document.getElementById("warning").innerText = "❌ Gagal dapat lokasi: " + err.message;
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
@@ -133,13 +113,14 @@
   <h2>Form Absensi Pegawai</h2>
   <form action="https://docs.google.com/forms/d/e/1FAIpQLSeTCCniucW246mMo646BYXNgOGwRu0fKV5HP0OFL3zOUet8hQ/formResponse"
         method="POST" target="hidden_iframe" onsubmit="return checkLocation();">
+
     <label>Nama Pegawai:</label>
     <select name="entry.821452381" required>
       <option value="">-- Pilih Nama --</option>
       <option value="Sutriono">Sutriono</option>
       <option value="Sugeng Hidayat">Sugeng Hidayat</option>
       <option value="Rety Fauziah">Rety Fauziah</option>
-      <option value="Komariah">Komariyah</option>
+      <option value="Komariah">Komariah</option>
       <option value="Ummu Sholikhah">Ummu Sholikhah</option>
       <option value="Endang Riswati">Endang Riswati</option>
       <option value="Nia Wulandari">Nia Wulandari</option>
@@ -170,7 +151,7 @@
     <p id="warning"></p>
   </form>
 
-  <a href="https://drive.google.com/uc?export=download&id=d/1wcn9oPxCC-dF6bQFe5dmOVVrD9Wje-vdqmmCuDqEB7E" class="download-link" target="_blank">📥 Unduh Rekap Absen</a>
+  <a class="download-link" href="https://drive.google.com/drive/folders/14jfUVIGdIoOyzF-G99HEHtk6HPAMg94fvxluGRKCAeKUHyRRQxb8lAdAAVFBslK3T6sxIY9t" target="_blank">📥 Lihat Rekap Absensi</a>
 
   <iframe name="hidden_iframe" style="display:none;" onload="submitBerhasil();"></iframe>
 </body>
