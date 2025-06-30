@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -14,6 +13,16 @@
     }
     #warning { color: red; font-weight: bold; white-space: pre-line; }
     #buktiDiv { display: none; }
+    .download-link {
+      display: inline-block;
+      background-color: #007bff;
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      text-decoration: none;
+      text-align: center;
+      margin-top: 20px;
+    }
   </style>
   <script>
     const sekolahLat = -7.71917;
@@ -160,6 +169,8 @@
     <input type="submit" value="Kirim Absensi">
     <p id="warning"></p>
   </form>
+
+  <a href="https://drive.google.com/uc?export=download&id=d/1wcn9oPxCC-dF6bQFe5dmOVVrD9Wje-vdqmmCuDqEB7E" class="download-link" target="_blank">📥 Unduh Rekap Absen</a>
 
   <iframe name="hidden_iframe" style="display:none;" onload="submitBerhasil();"></iframe>
 </body>
